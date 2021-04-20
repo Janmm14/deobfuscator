@@ -31,6 +31,9 @@ public class DeadCodeRemover extends Transformer<TransformerConfig> {
                 if (methodNode.instructions.getFirst() == null) continue;
 
                 InstructionModifier modifier = new InstructionModifier();
+                
+                methodNode.maxStack += 100;
+                methodNode.maxLocals += 100;
 
                 Frame<BasicValue>[] frames = new Analyzer<>(new BasicInterpreter()).analyze(classNode.name, methodNode);
                 for (int i = 0; i < methodNode.instructions.size(); i++) {
