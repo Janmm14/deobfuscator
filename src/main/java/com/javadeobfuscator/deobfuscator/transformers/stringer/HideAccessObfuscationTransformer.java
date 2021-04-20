@@ -478,7 +478,7 @@ public class HideAccessObfuscationTransformer extends Transformer<TransformerCon
 		                			{
 		                				if(getDeobfuscator().isSubclass(typeNow.getInternalName(), typeBefore.getInternalName()))
 		                					set.add(ain);
-		                			}catch(Exception e) {}	
+		                			}catch(Exception ignored) {}	
 		                		else if(typeNow.getSort() == Type.ARRAY && typeBefore.getSort() == Type.ARRAY)
 		                		{
 		                			typeBefore = typeBefore.getElementType();
@@ -588,11 +588,11 @@ public class HideAccessObfuscationTransformer extends Transformer<TransformerCon
         return null;
     }
 
-    private class MyInterpreter extends BasicInterpreter
+    private static class MyInterpreter extends BasicInterpreter
     {
     	public MyInterpreter()
     	{
-    		super(Opcodes.ASM8);
+    		super(Opcodes.ASM9);
     	}
     	
     	@Override

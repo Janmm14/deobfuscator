@@ -54,7 +54,7 @@ public class AnalyzerResult {
     public Map<Frame, AbstractInsnNode> getMapping() {
         if (mapping == null) {
             Map<Frame, AbstractInsnNode> reverseMapping = new HashMap<>();
-            frames.entrySet().forEach(ent -> ent.getValue().forEach(frame -> reverseMapping.put(frame, ent.getKey())));
+            frames.forEach((key, value) -> value.forEach(frame -> reverseMapping.put(frame, key)));
             mapping = reverseMapping;
         }
         return mapping;

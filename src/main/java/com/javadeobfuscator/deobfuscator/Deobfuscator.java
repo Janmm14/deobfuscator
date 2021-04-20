@@ -79,14 +79,14 @@ public class Deobfuscator {
     /**
      * Must enable for paramorphism obfuscated files.
      */
-    private static final boolean PARAMORPHISM = false;
+    private static final boolean PARAMORPHISM = System.getProperty("com.javadeobfuscator.paramorphism") != null;
     
     public List<String> junkFiles = new ArrayList<>();
     
     /**
      * Must enable for paramorphism v2 obfuscated files.
      */
-    private static final boolean PARAMORPHISM_V2 = false;
+    private static final boolean PARAMORPHISM_V2 = System.getProperty("com.javadeobfuscator.paramorphism_v2") != null;
 
     public ConstantPool getConstantPool(ClassNode classNode) {
         return this.constantPools.get(classNode);

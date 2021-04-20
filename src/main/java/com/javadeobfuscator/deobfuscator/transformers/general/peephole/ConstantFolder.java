@@ -43,7 +43,8 @@ public class ConstantFolder extends Transformer<ConstantFolder.Config> {
                     Map<AbstractInsnNode, InsnList> replacements = new HashMap<>();
 
                     for (int i = 0; i < methodNode.instructions.size(); i++) {
-                        AbstractInsnNode ain = methodNode.instructions.get(i);
+                        final AbstractInsnNode ain = methodNode.instructions.get(i);
+                        final int ainOpcode = ain.getOpcode();
                         opcodes:
                         switch (ain.getOpcode()) {
                             case IADD:
@@ -54,7 +55,9 @@ public class ConstantFolder extends Transformer<ConstantFolder.Config> {
                             case ISHL:
                             case ISHR:
                             case IUSHR:
-                            case IXOR: {
+                            case IXOR:
+                            case IOR:
+                            case IAND: {
                                 List<Frame> frames = result.getFrames().get(ain);
                                 if (frames == null) {
                                     break;
@@ -68,26 +71,47 @@ public class ConstantFolder extends Transformer<ConstantFolder.Config> {
                                     Frame top = frame.getTargets().get(0);
                                     Frame bottom = frame.getTargets().get(1);
                                     if (top instanceof LdcFrame && bottom instanceof LdcFrame) {
-                                    	int bottomValue = ((Number) ((LdcFrame) bottom).getConstant()).intValue();
-                                    	int topValue = ((Number) ((LdcFrame) top).getConstant()).intValue();
-                                        if (ain.getOpcode() == IADD) {
-                                            results.add(bottomValue + topValue);
-                                        } else if (ain.getOpcode() == IMUL) {
-                                            results.add(bottomValue * topValue);
-                                        } else if (ain.getOpcode() == IREM) {
-                                            results.add(bottomValue % topValue);
-                                        } else if (ain.getOpcode() == ISUB) {
-                                            results.add(bottomValue - topValue);
-                                        } else if (ain.getOpcode() == IDIV) {
-                                            results.add(bottomValue / topValue);
-                                        } else if (ain.getOpcode() == ISHL) {
-                                            results.add(bottomValue << topValue);
-                                        } else if (ain.getOpcode() == ISHR) {
-                                            results.add(bottomValue >> topValue);
-                                        } else if (ain.getOpcode() == IUSHR) {
-                                            results.add(bottomValue >>> topValue);
-                                        } else if (ain.getOpcode() == IXOR) {
-                                        	results.add(bottomValue ^ topValue);
+                                        if (results.size() > 1) {
+                                            break opcodes;
+                                        }
+                                        int bottomValue = ((Number) ((LdcFrame) bottom).getConstant()).intValue();
+                                        int topValue = ((Number) ((LdcFrame) top).getConstant()).intValue();
+                                        switch (ainOpcode) {
+                                            case IADD:
+                                                results.add(bottomValue + topValue);
+                                                break;
+                                            case IMUL:
+                                                results.add(bottomValue * topValue);
+                                                break;
+                                            case IREM:
+                                                results.add(bottomValue % topValue);
+                                                break;
+                                            case ISUB:
+                                                results.add(bottomValue - topValue);
+                                                break;
+                                            case IDIV:
+                                                results.add(bottomValue / topValue);
+                                                break;
+                                            case ISHL:
+                                                results.add(bottomValue << topValue);
+                                                break;
+                                            case ISHR:
+                                                results.add(bottomValue >> topValue);
+                                                break;
+                                            case IUSHR:
+                                                results.add(bottomValue >>> topValue);
+                                                break;
+                                            case IXOR:
+                                                results.add(bottomValue ^ topValue);
+                                                break;
+                                            case IOR:
+                                                results.add(bottomValue | topValue);
+                                                break;
+                                            case IAND:
+                                                results.add(bottomValue & topValue);
+                                                break;
+                                            default:
+                                                throw new IllegalStateException("Unexpected insn: " + Utils.prettyprint(ain));
                                         }
                                     } else {
                                         break opcodes;
@@ -97,6 +121,153 @@ public class ConstantFolder extends Transformer<ConstantFolder.Config> {
                                     InsnList replacement = new InsnList();
                                     replacement.add(new InsnNode(POP2)); // remove existing args from stack
                                     replacement.add(Utils.getIntInsn(results.iterator().next()));
+                                    replacements.put(ain, replacement);
+                                    folded.getAndIncrement();
+                                }
+                                break;
+                            }
+                            case LADD:
+                            case LSUB:
+                            case LMUL:
+                            case LDIV:
+                            case LREM:
+                            case LSHL:
+                            case LSHR:
+                            case LUSHR:
+                            case LXOR:
+                            case LOR:
+                            case LAND: {
+                                List<Frame> frames = result.getFrames().get(ain);
+                                if (frames == null) {
+                                    break;
+                                }
+                                Set<Long> results = new HashSet<>();
+                                for (Frame frame0 : frames) {
+                                    MathFrame frame = (MathFrame) frame0;
+                                    if (frame.getTargets().size() != 2) {
+                                        throw new RuntimeException("weird: " + frame);
+                                    }
+                                    Frame top = frame.getTargets().get(0);
+                                    Frame bottom = frame.getTargets().get(1);
+                                    if (top instanceof LdcFrame && bottom instanceof LdcFrame) {
+                                        if (results.size() > 1) {
+                                            break opcodes;
+                                        }
+                                        long bottomValue = ((Number) ((LdcFrame) bottom).getConstant()).longValue();
+                                        long topValue = ((Number) ((LdcFrame) top).getConstant()).longValue();
+                                        switch (ainOpcode) {
+                                            case LADD:
+                                                results.add(bottomValue + topValue);
+                                                break;
+                                            case LMUL:
+                                                results.add(bottomValue * topValue);
+                                                break;
+                                            case LREM:
+                                                results.add(bottomValue % topValue);
+                                                break;
+                                            case LSUB:
+                                                results.add(bottomValue - topValue);
+                                                break;
+                                            case LDIV:
+                                                results.add(bottomValue / topValue);
+                                                break;
+                                            case LSHL:
+                                                results.add(bottomValue << topValue);
+                                                break;
+                                            case LSHR:
+                                                results.add(bottomValue >> topValue);
+                                                break;
+                                            case LUSHR:
+                                                results.add(bottomValue >>> topValue);
+                                                break;
+                                            case LXOR:
+                                                results.add(bottomValue ^ topValue);
+                                                break;
+                                            case LOR:
+                                                results.add(bottomValue | topValue);
+                                                break;
+                                            case LAND:
+                                                results.add(bottomValue & topValue);
+                                                break;
+                                            default:
+                                                throw new IllegalStateException("Unexpected insn: " + Utils.prettyprint(ain));
+                                        }
+                                    } else {
+                                        break opcodes;
+                                    }
+                                }
+                                if (results.size() == 1) {
+                                    InsnList replacement = new InsnList();
+                                    replacement.add(new InsnNode(POP2)); // remove existing args from stack
+                                    replacement.add(new InsnNode(POP2)); // remove existing args from stack
+                                    replacement.add(Utils.getLongInsn(results.iterator().next()));
+                                    replacements.put(ain, replacement);
+                                    folded.getAndIncrement();
+                                }
+                                break;
+                            }
+                            case INEG: {
+                                List<Frame> frames = result.getFrames().get(ain);
+                                if (frames == null) {
+                                    // wat
+                                    break;
+                                }
+                                Set<Integer> results = new HashSet<>();
+                                for (Frame frame0 : frames) {
+                                    MathFrame frame = (MathFrame) frame0;
+                                    if (frame.getTargets().size() != 1) {
+                                        throw new RuntimeException("weird: " + frame);
+                                    }
+                                    if (frame.getTargets().get(0) instanceof LdcFrame) {
+                                        if (results.size() > 1) {
+                                            break opcodes;
+                                        }
+                                        int value = ((Number) ((LdcFrame) frame.getTargets().get(0)).getConstant()).intValue();
+                                        if (ainOpcode == INEG) {
+                                            results.add(-value);
+                                        } else {
+                                            throw new RuntimeException();
+                                        }
+                                    } else {
+                                        break opcodes;
+                                    }
+                                }
+                                if (results.size() == 1) {
+                                    InsnList replacement = new InsnList();
+                                    replacement.add(new InsnNode(POP)); // remove existing arg from stack
+                                    replacement.add(Utils.getIntInsn(results.iterator().next()));
+                                    replacements.put(ain, replacement);
+                                    folded.getAndIncrement();
+                                }
+                                break;
+                            }
+                            case LNEG: {
+                                List<Frame> frames = result.getFrames().get(ain);
+                                if (frames == null) {
+                                    // wat
+                                    break;
+                                }
+                                Set<Long> results = new HashSet<>();
+                                for (Frame frame0 : frames) {
+                                    MathFrame frame = (MathFrame) frame0;
+                                    if (frame.getTargets().get(0) instanceof LdcFrame) {
+                                        if (results.size() > 1) {
+                                            break opcodes;
+                                        }
+                                        long value = ((Number) ((LdcFrame) frame.getTargets().get(0)).getConstant()).longValue();
+                                        if (ainOpcode == LNEG) {
+                                            results.add(-value);
+                                        } else {
+                                            throw new RuntimeException();
+                                        }
+                                    } else {
+                                        break opcodes;
+                                    }
+                                }
+                                if (results.size() == 1) {
+                                    InsnList replacement = new InsnList();
+                                    replacement.add(new InsnNode(POP2)); // remove existing arg from stack
+                                    replacement.add(Utils.getLongInsn(results.iterator().next()));
                                     replacements.put(ain, replacement);
                                     folded.getAndIncrement();
                                 }
@@ -162,21 +333,31 @@ public class ConstantFolder extends Transformer<ConstantFolder.Config> {
                                 for (Frame frame0 : frames) {
                                     JumpFrame frame = (JumpFrame) frame0;
                                     if (frame.getComparators().get(0) instanceof LdcFrame) {
+                                        if (results.size() > 1) {
+                                            break opcodes;
+                                        }
                                     	int value = ((Number) ((LdcFrame) frame.getComparators().get(0)).getConstant()).intValue();
-                                        if (ain.getOpcode() == IFGE) {
-                                            results.add(value >= 0);
-                                        } else if (ain.getOpcode() == IFGT) {
-                                            results.add(value > 0);
-                                        } else if (ain.getOpcode() == IFLE) {
-                                            results.add(value <= 0);
-                                        } else if (ain.getOpcode() == IFLT) {
-                                            results.add(value < 0);
-                                        } else if (ain.getOpcode() == IFNE) {
-                                            results.add(value != 0);
-                                        } else if (ain.getOpcode() == IFEQ) {
-                                            results.add(value == 0);
-                                        } else {
-                                            throw new RuntimeException();
+                                        switch (ainOpcode) {
+                                            case IFGE:
+                                                results.add(value >= 0);
+                                                break;
+                                            case IFGT:
+                                                results.add(value > 0);
+                                                break;
+                                            case IFLE:
+                                                results.add(value <= 0);
+                                                break;
+                                            case IFLT:
+                                                results.add(value < 0);
+                                                break;
+                                            case IFNE:
+                                                results.add(value != 0);
+                                                break;
+                                            case IFEQ:
+                                                results.add(value == 0);
+                                                break;
+                                            default:
+                                                throw new RuntimeException();
                                         }
                                     } else {
                                     	break opcodes;
@@ -208,22 +389,32 @@ public class ConstantFolder extends Transformer<ConstantFolder.Config> {
                                 for (Frame frame0 : frames) {
                                     JumpFrame frame = (JumpFrame) frame0;
                                     if (frame.getComparators().get(0) instanceof LdcFrame && frame.getComparators().get(1) instanceof LdcFrame) {
+                                        if (results.size() > 1) {
+                                            break opcodes;
+                                        }
                                     	int topValue = ((Number) ((LdcFrame) frame.getComparators().get(0)).getConstant()).intValue();
                                     	int bottomValue = ((Number) ((LdcFrame) frame.getComparators().get(1)).getConstant()).intValue();
-                                        if (ain.getOpcode() == IF_ICMPNE) {
-                                            results.add(bottomValue != topValue);
-                                        } else if (ain.getOpcode() == IF_ICMPEQ) {
-                                            results.add(bottomValue == topValue);
-                                        } else if (ain.getOpcode() == IF_ICMPLT) {
-                                            results.add(bottomValue < topValue);
-                                        } else if (ain.getOpcode() == IF_ICMPGE) {
-                                            results.add(bottomValue >= topValue);
-                                        } else if (ain.getOpcode() == IF_ICMPGT) {
-                                            results.add(bottomValue > topValue);
-                                        } else if (ain.getOpcode() == IF_ICMPLE) {
-                                            results.add(bottomValue <= topValue);
-                                        } else {
-                                            throw new RuntimeException();
+                                        switch (ainOpcode) {
+                                            case IF_ICMPNE:
+                                                results.add(bottomValue != topValue);
+                                                break;
+                                            case IF_ICMPEQ:
+                                                results.add(bottomValue == topValue);
+                                                break;
+                                            case IF_ICMPLT:
+                                                results.add(bottomValue < topValue);
+                                                break;
+                                            case IF_ICMPGE:
+                                                results.add(bottomValue >= topValue);
+                                                break;
+                                            case IF_ICMPGT:
+                                                results.add(bottomValue > topValue);
+                                                break;
+                                            case IF_ICMPLE:
+                                                results.add(bottomValue <= topValue);
+                                                break;
+                                            default:
+                                                throw new RuntimeException();
                                         }
                                     } else {
                                         break opcodes;
@@ -282,7 +473,8 @@ public class ConstantFolder extends Transformer<ConstantFolder.Config> {
                                 Set<AbstractInsnNode> remove = new HashSet<>();
                                 for (Frame frame0 : frames) {
                                     PopFrame frame = (PopFrame) frame0;
-                                    if (frame.getRemoved().get(0) instanceof LdcFrame && (ain.getOpcode() == POP2 ? frame.getRemoved().size() == 2 && frame.getRemoved().get(1) instanceof LdcFrame : true)) {
+                                    if (frame.getRemoved().get(0) instanceof LdcFrame
+                                        && (ainOpcode != POP2 || frame.getRemoved().size() == 2 && frame.getRemoved().get(1) instanceof LdcFrame)) {
                                         for (Frame deletedFrame : frame.getRemoved()) {
                                             if (deletedFrame.getChildren().size() > 1) {
                                                 // ldc -> ldc -> swap -> pop = we can't even

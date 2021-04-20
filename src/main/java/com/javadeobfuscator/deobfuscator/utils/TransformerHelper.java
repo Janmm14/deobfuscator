@@ -489,6 +489,9 @@ public class TransformerHelper implements Opcodes {
 
             @Override
             public boolean hasNext() {
+                if (this.next != null) {
+                    return true;
+                }
                 while (iterator.hasNext()) {
                     next = iterator.next();
                     if (Utils.isInstruction(next)) {
@@ -501,7 +504,9 @@ public class TransformerHelper implements Opcodes {
             @Override
             public AbstractInsnNode next() {
                 if (this.next == null) {
-                    throw new NoSuchElementException();
+                    if (!this.hasNext()) {
+                        throw new NoSuchElementException();
+                    }
                 }
                 AbstractInsnNode next = this.next;
                 this.next = null;

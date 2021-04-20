@@ -6,7 +6,7 @@
     <version>1.0.0</version>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <version.asm>8.0.1</version.asm>
+        <version.asm>9.1</version.asm>
     </properties>
     <build>
         <sourceDirectory>src/main/java</sourceDirectory>
@@ -27,8 +27,9 @@
         </testResources>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.7.0</version>
+                <version>3.8.1</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
@@ -41,7 +42,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>3.2.4</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -67,7 +68,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>2.4</version>
+                <version>3.2.0</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -90,6 +91,33 @@
     </repositories>
 
     <dependencies>
+        <!-- ASM related dependencies -->
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm</artifactId>
+            <version>${version.asm}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-commons</artifactId>
+            <version>${version.asm}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-util</artifactId>
+            <version>${version.asm}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-tree</artifactId>
+            <version>${version.asm}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-analysis</artifactId>
+            <version>${version.asm}</version>
+        </dependency>
+
         <dependency>
             <groupId>commons-cli</groupId>
             <artifactId>commons-cli</artifactId>
@@ -145,33 +173,6 @@
             <artifactId>junit</artifactId>
             <version>4.12</version>
             <scope>test</scope>
-        </dependency>
-
-        <!-- ASM related dependencies -->
-        <dependency>
-            <groupId>org.ow2.asm</groupId>
-            <artifactId>asm</artifactId>
-            <version>${version.asm}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.ow2.asm</groupId>
-            <artifactId>asm-commons</artifactId>
-            <version>${version.asm}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.ow2.asm</groupId>
-            <artifactId>asm-util</artifactId>
-            <version>${version.asm}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.ow2.asm</groupId>
-            <artifactId>asm-tree</artifactId>
-            <version>${version.asm}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.ow2.asm</groupId>
-            <artifactId>asm-analysis</artifactId>
-            <version>${version.asm}</version>
         </dependency>
 
         <dependency>

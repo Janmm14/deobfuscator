@@ -339,6 +339,28 @@ public class Utils {
 
         return newInsnList;
     }
+    
+    public static AbstractInsnNode getConstantLoadInsn(Object obj) {
+        if (obj == null) {
+            return new InsnNode(ACONST_NULL);
+        }
+        if (obj instanceof Number) {
+            if (obj instanceof Float) {
+                return getFloatInsn((Float) obj);
+            }
+            if (obj instanceof Double) {
+                return getDoubleInsn((Double) obj);
+            }
+            if (obj instanceof Long) {
+                return getLongInsn((Long) obj);
+            }
+            return getIntInsn(((Number) obj).intValue());
+        }
+        if (! (obj instanceof String || obj instanceof Type)) {
+            throw new IllegalArgumentException("Unknown constant type " + obj.getClass() + " - " + obj);
+        }
+        return new LdcInsnNode(obj);
+    }
 
     public static AbstractInsnNode getIntInsn(int number) {
     	if (number >= -1 && number <= 5)
